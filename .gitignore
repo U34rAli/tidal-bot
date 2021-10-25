@@ -1,2 +1,5 @@
 .vscode
 venv
+*.log
+bot/__pycache__/
+*.pyc
