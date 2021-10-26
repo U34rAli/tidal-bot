@@ -31,7 +31,8 @@ class Firefox(Driver):
 
 
 def get_driver(base_path, browser = "chrome"):
-    if browser.lower() == "firefox":
-        return Firefox(base_path).get_driver()
-    else:
-        return Chrome(base_path).get_driver()
+    driver = {
+        'chrome': Chrome(base_path),
+        'firefox': Firefox(base_path)
+    }
+    return driver[browser].get_driver()

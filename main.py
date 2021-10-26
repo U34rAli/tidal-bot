@@ -1,14 +1,22 @@
 
 import os
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from bot.driver import get_driver
 
-driver = get_driver( os.path.join(os.getcwd(), "drivers") )
-driver.get("http://www.python.org")
-assert "Python" in driver.title
-elem = driver.find_element_by_name("q")
-elem.clear()
-elem.send_keys("pycon")
-elem.send_keys(Keys.RETURN)
-assert "No results found." not in driver.page_source
-driver.close()
+browser = get_driver( os.path.join(os.getcwd(), "drivers") )
+browser.get("https://listen.tidal.com/artist/10003047")
+
+try:
+    element = WebDriverWait(browser, 10).until(
+        EC.presence_of_element_located((By.ID, "login-button"))
+    )
+    element.click()
+    print("Page is ready!")
+
+finally:
+    browser.quit()
+
+browser.close()
