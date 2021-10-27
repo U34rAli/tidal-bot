@@ -1,22 +1,21 @@
 
 import os
-from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.chrome import options
+
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from bot.driver import get_driver
+from selenium.webdriver.chrome.options import Options
 
-browser = get_driver( os.path.join(os.getcwd(), "drivers") )
-browser.get("https://listen.tidal.com/artist/10003047")
+
+from bot.driver import get_driver
+from bot.tidal import Tidal
+
 
 try:
-    element = WebDriverWait(browser, 10).until(
-        EC.presence_of_element_located((By.ID, "login-button"))
-    )
-    element.click()
-    print("Page is ready!")
+    browser = get_driver( os.path.join(os.getcwd(), "drivers") )
+    tidal = Tidal(browser, "https://listen.tidal.com/artist/10003047", 'xxxxx@gmail.com', 'xxxxx')
+    tidal.play_song()
 
 finally:
-    browser.quit()
-
-browser.close()
+    browser.close()
