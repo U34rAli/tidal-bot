@@ -42,7 +42,7 @@ class Tidal:
         element.send_keys(self.password)
 
     def __press_login_btn(self):
-        element = self.__wait_tag_by_sec('//button/div[text()="Log In"]', By.XPATH, 10)
+        element = self.__wait_tag_by_sec("//button/div[contains(text(),'Log In')]", By.XPATH, 10)
         element.click()
 
     def __press_login_continue_btn(self):
@@ -61,6 +61,36 @@ class Tidal:
         time.sleep(5)
         self.__press_login_btn()
 
+    
+    def stream_song(self):
+        btn = "//button/div/div/span[contains(text(),'Play')]"
+        element = self.__wait_tag_by_sec(btn, By.XPATH, 10)
+        element.click()
+
+    def play_next_song(self):
+        btn = "//button[@data-test='next']"
+        element = self.__wait_tag_by_sec(btn, By.XPATH, 10)
+        element.click()
+
+    def play_previous_song(self):
+        btn = "//button[@data-test='previous']"
+        element = self.__wait_tag_by_sec(btn, By.XPATH, 10)
+        element.click()
+
+    def get_time_duration(self):
+        btn = "//time[@data-test='duration-time']"
+        element = self.__wait_tag_by_sec(btn, By.XPATH, 10)
+        return element.get_attribute('textContent')
+
+    def pause_song(self):
+        btn = "//button[@data-test='pause']"
+        element = self.__wait_tag_by_sec(btn, By.XPATH, 10)
+        element.click()
+
+    def play_song(self):
+        btn = "//button[@data-test='play']"
+        element = self.__wait_tag_by_sec(btn, By.XPATH, 10)
+        element.click()
 
     def __login_check(self):
         element = self.__wait_tag_by_sec("login-button", By.ID, 5)
@@ -77,7 +107,16 @@ class Tidal:
     def __get(self):
         self.browser.get(self.url)
 
-    def play_song(self):
+    def setup(self):
         self.__get()
         time.sleep(5)
-        self.__login_check()
+        login_success = self.__login_check()
+
+        if login_success:
+            return True
+        
+        raise 'Unable to Login'
+
+
+
+
