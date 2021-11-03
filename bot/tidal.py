@@ -1,3 +1,4 @@
+from random import randrange
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -12,8 +13,9 @@ class Tidal:
     implicit_wait = 2  # seconds
     username: str
     password: str
+    min_song_seconds = 10
 
-    def __init__(self, browser, url, username, password) -> None:
+    def __init__(self, browser, username, password, url=None) -> None:
         self.browser = browser
         self.url = url
         self.username = username
@@ -44,7 +46,8 @@ class Tidal:
         return None
 
     def get_song_random_point(self):
-        song_duration = self.get_time_duration().split(':')
+        total_sec = self.time_to_sec(self.get_total_duration())
+        return randrange(self.min_song_seconds, total_sec, 1)
 
     def __enter_username(self):
         element = self.__wait_tag_by_sec('email', By.ID, 10)
@@ -71,7 +74,6 @@ class Tidal:
         return False
 
     def __perform_login(self, login_btn):
-        
         login_btn.click()
         time.sleep(5)
         self.__enter_username()
@@ -81,7 +83,6 @@ class Tidal:
         self.__enter_password()
         time.sleep(5)
         self.__press_login_btn()
-
     
     def stream_song(self):
         btn = "//button/div/div/span[contains(text(),'Play')]"
@@ -98,7 +99,7 @@ class Tidal:
         element = self.__wait_tag_by_sec(btn, By.XPATH, 10)
         element.click()
 
-    def get_time_duration(self):
+    def get_total_duration(self):
         btn = "//time[@data-test='duration-time']"
         element = self.__wait_tag_by_sec(btn, By.XPATH, 10)
         return element.get_attribute('textContent')

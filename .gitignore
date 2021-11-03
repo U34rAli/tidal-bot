@@ -4,3 +4,4 @@ credentials.txt
 *.log
 bot/__pycache__/
 *.pyc
+extensions
