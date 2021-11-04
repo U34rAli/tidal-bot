@@ -119,6 +119,11 @@ class Tidal:
         element = self.__wait_tag_by_sec(btn, By.XPATH, 10)
         element.click()
 
+    def get_song_details(self):
+        btn = "//div[@data-test='left-column-footer-player']"
+        element = self.__wait_tag_by_sec(btn, By.XPATH, 10)
+        return element.text
+
     def __login_check(self):
         element = self.__wait_tag_by_sec('login-button', By.ID, 5)
         if element:
