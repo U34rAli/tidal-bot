@@ -13,7 +13,7 @@ class Tidal:
     implicit_wait = 2  # seconds
     username: str
     password: str
-    min_song_seconds = 10
+    min_song_seconds = 30
 
     def __init__(self, browser, username, password, url=None) -> None:
         self.browser = browser
@@ -47,7 +47,7 @@ class Tidal:
 
     def get_song_random_point(self):
         total_sec = self.time_to_sec(self.get_total_duration())
-        return randrange(self.min_song_seconds, total_sec, 1)
+        return randrange(self.min_song_seconds, 40, 1)
 
     def __enter_username(self):
         element = self.__wait_tag_by_sec('email', By.ID, 10)
@@ -147,7 +147,7 @@ class Tidal:
         if login_success:
             return True
         
-        raise 'Unable to Login'
+        raise Exception('Unable to login.')
 
 
 
