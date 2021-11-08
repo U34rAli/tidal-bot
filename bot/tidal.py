@@ -99,6 +99,16 @@ class Tidal:
         element = self.__wait_tag_by_sec(btn, By.XPATH, 10)
         element.click()
 
+    def follow_artist(self):
+        btn = "//button[@data-test='favorite-button']"
+        element = self.__wait_tag_by_sec(btn, By.XPATH, 10)
+        element.click()
+
+    def like_song(self):
+        btn = "//button[@data-test='footer-favorite-button']"
+        element = self.__wait_tag_by_sec(btn, By.XPATH, 10)
+        element.click()
+
     def get_total_duration(self):
         btn = "//time[@data-test='duration-time']"
         element = self.__wait_tag_by_sec(btn, By.XPATH, 10)
