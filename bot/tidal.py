@@ -3,6 +3,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from bot.errors import InvalidCredentials, ElementNotFound, Blocked
 
 import time
 
@@ -25,15 +26,16 @@ class Tidal:
         """
         return True Element if Login is required.
         """
-        element = None
         try:
             element = WebDriverWait(self.browser, sec).until(
                 EC.presence_of_element_located((by, tag))
             )
-        except Exception as e:
-            print('Element not found. Name: ', tag)
-        finally:
             return element
+        except Exception as e:
+            if self.is_blocked():
+                raise Blocked('IP Blocked.')
+            else:
+                raise ElementNotFound(f'Element not found: {tag}')
 
     def time_to_sec(self, time_str):
         time_hms = [ int(i) for i in time_str.split(':')]
@@ -66,23 +68,41 @@ class Tidal:
         element.click()
 
     def is_blocked(self):
-        "document.body.innerText"
-        element = self.__wait_tag_by_sec('iframe', By.TAG_NAME, 5)
-        if element:
-            if element.get_attribute('height') == '100%' or self.browser.execute_script('document.body.innerText') == None:
+        try:
+            element = self.browser.find_element_by_tag_name('iframe')
+            if element.get_attribute('height') == '100%' or self.browser.find_element_by_xpath("//html/body").text == '':
                 return True
+        except Exception as e:
+            print('iFrame not found.')
         return False
 
+    def __perform_email_invalid_credential_check(self):
+        try:
+            self.__wait_tag_by_sec('email', By.ID, 10)
+            raise InvalidCredentials('Invalid credentials.')
+        except Blocked as block:
+            raise block
+        except ElementNotFound:
+            return
+
     def __perform_login(self, login_btn):
-        login_btn.click()
-        time.sleep(5)
-        self.__enter_username()
-        time.sleep(5)
-        self.__press_login_continue_btn()
-        time.sleep(5)
-        self.__enter_password()
-        time.sleep(5)
-        self.__press_login_btn()
+        try:
+            login_btn.click()
+            time.sleep(5)
+            self.__enter_username()
+            time.sleep(5)
+            self.__press_login_continue_btn()
+            time.sleep(5)
+
+            self.__enter_password()
+            time.sleep(5)
+            self.__press_login_btn()
+            time.sleep(10)
+            self.__perform_email_invalid_credential_check()
+        except Blocked as e:
+            raise e
+        except (ElementNotFound, InvalidCredentials) as e:
+            raise InvalidCredentials(f'Invalid credientials email: {self.username}, password: {self.password}')
     
     def stream_song(self):
         btn = "//button/div/div/span[contains(text(),'Play')]"
@@ -134,31 +154,30 @@ class Tidal:
         element = self.__wait_tag_by_sec(btn, By.XPATH, 10)
         return element.text
 
+    def get_songs_list(self):
+        btn = "//button/div/div/span[contains(text(),'View all')]"
+        element = self.__wait_tag_by_sec(btn, By.XPATH, 10)
+        return element.text
+
     def __login_check(self):
-        element = self.__wait_tag_by_sec('login-button', By.ID, 5)
-        if element:
-            try:
-                time.sleep(5)
-                self.__perform_login(element)
-                return True
-            except Exception as e:
-                print('Unable to login. Error! ', e)
-                return False
-        return True
+        try:
+            element = self.__wait_tag_by_sec('login-button', By.ID, 5)
+            time.sleep(5)
+            self.__perform_login(element)
+        except ElementNotFound:
+            raise ElementNotFound('Not need to login.')
+        except Blocked as block:
+            raise block
+        except InvalidCredentials as error:
+            raise error
 
     def __get(self):
         self.browser.get(self.url)
 
-    def setup(self):
+    def login(self):
         self.__get()
         time.sleep(10)
-        login_success = self.__login_check()
+        self.__login_check()
 
-        if login_success:
-            return True
-        
-        raise Exception('Unable to login.')
-
-
-
-
+    def setup(self):
+        self.__get()
