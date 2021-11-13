@@ -8,24 +8,12 @@ import logging
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver import ActionChains
 import argparse
-import threading
 from bot.errors import InvalidCredentials, ElementNotFound, Blocked
 from concurrent.futures import ThreadPoolExecutor
-
+from config import *
 
 format = "%(asctime)s: %(message)s"
 logging.basicConfig(filename="app.log", format=format, level=logging.INFO, datefmt="%H:%M:%S")
-
-LINKS_PER_ACCOUNT = 10
-SONGS_PER_URL = 10
-LIKE_SONG_CHANCE = 20
-FOLLOW_ARTIST_CHANCE = 20
-MINIMUM_SONGS_PER_LINK = 5
-MAX_SONGS_PER_LINK = 20
-MINIMUM_LINKS_PER_ACCOUNT = 1
-MAX_LINKS_PER_ACCOUTN = 20
-PROXY_LIST = []
-MAX_THREADS = 2
 
 
 def read_file_lines(filename):
@@ -109,16 +97,16 @@ def play_songs(username: str, password: str, links: list, browser):
     logging.info(f"No. of links {len(links)}")
     for link in links:
         tidal.url = link
-        tidal.setup()
         logging.info(f"Page URL {tidal.url}.")
+        tidal.setup()
+        logging.info("Page setup completed.")
         try:
-            logging.info("Page setup completed.")
             logging.info(f"Songs Per Link = {SONGS_PER_URL}.")
             time.sleep(5)
             tidal.stream_song()
             for i in range(SONGS_PER_URL):
                 song_play_time = tidal.get_song_random_point()
-                logging.info(f"Play song for {song_play_time} sec.")
+                logging.info(f"Playing song for {song_play_time} seconds.")
                 logging.info(f"Current song info: {tidal.get_song_details()}")
                 time.sleep(1)
                 decide_like(tidal)
@@ -137,39 +125,42 @@ def play_songs(username: str, password: str, links: list, browser):
             break
 
 
-def install_browsec(browser):
+def activate_browsec(browser):
     browser.get("chrome-extension://bhbolmecjmfonpkpebccliojaipnocpc/popup/popup.html")
     browser.execute_script(
         "document.querySelector('page-switch').shadowRoot.querySelector('main-index').shadowRoot.querySelector('c-switch').click()"
     )
 
 
-def initialize_browser(proxy=None):
+def initialize_browser():
+    global USE_PROXY, USE_BROWSEC
     options = driver.ChromeOptions()
-    # options.add_argument(f"--proxy-server=%s" % proxy)
-
     EXTENION_PATH = os.path.abspath("extensions")
-    options.add_argument(f"--load-extension={EXTENION_PATH}")
 
+    options.add_argument(f"--proxy-server=%s" % USE_PROXY) if USE_PROXY else 0
+    options.add_argument(f"--load-extension={EXTENION_PATH}") if USE_BROWSEC else 0
     browser = driver.Chrome(options=options)
-    install_browsec(browser)
+    activate_browsec(browser) if USE_BROWSEC else 0
     time.sleep(2)
+
     return browser
 
 
 def browser_threads(data):
     username, password, urls, thread_no = data
     try:
+        logging.info(f'Running thread {thread_no}')
         browser = initialize_browser()
         play_songs(username, password, random.sample(urls, LINKS_PER_ACCOUNT), browser)
     except Exception as e:
         logging.error(e)
     finally:
         browser.close()
+        browser.quit()
         logging.info(f'Browser with ID: {thread_no} closed.')
 
 
-def play_song_on_each_user(credentials, urls):
+def start_threads_pool(credentials, urls):
     global MAX_THREADS
 
     with ThreadPoolExecutor(max_workers=MAX_THREADS) as executor:
@@ -205,7 +196,7 @@ if __name__ == "__main__":
         PROXY_LIST = get_porxy("proxy.txt")
         initialize_variables(opt, len(links))
 
-        play_song_on_each_user(credentials, links)
+        start_threads_pool(credentials, links)
 
     except Exception as e:
         logging.error(e)
