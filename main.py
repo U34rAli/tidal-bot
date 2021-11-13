@@ -10,6 +10,8 @@ from selenium.webdriver import ActionChains
 import argparse
 import threading
 from bot.errors import InvalidCredentials, ElementNotFound, Blocked
+from concurrent.futures import ThreadPoolExecutor
+
 
 format = "%(asctime)s: %(message)s"
 logging.basicConfig(filename="app.log", format=format, level=logging.INFO, datefmt="%H:%M:%S")
@@ -155,7 +157,8 @@ def initialize_browser(proxy=None):
     return browser
 
 
-def browser_threads(username, password, urls, thread_no):
+def browser_threads(data):
+    username, password, urls, thread_no = data
     try:
         browser = initialize_browser()
         play_songs(username, password, random.sample(urls, LINKS_PER_ACCOUNT), browser)
@@ -167,11 +170,13 @@ def browser_threads(username, password, urls, thread_no):
 
 
 def play_song_on_each_user(credentials, urls):
-    threads = list()
-    for position, user in enumerate(credentials[:2]):
-        thread = threading.Thread(target=browser_threads, args=(user[0], user[1], urls, position,))
-        threads.append(thread)
-        thread.start()
+    global MAX_THREADS
+
+    with ThreadPoolExecutor(max_workers=MAX_THREADS) as executor:
+        data = []
+        for position, user in enumerate(credentials):
+            data.append([user[0], user[1], urls, position])
+        executor.map(browser_threads, data)
 
 
 if __name__ == "__main__":
